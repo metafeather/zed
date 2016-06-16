@@ -20,6 +20,7 @@ var spawn = require("child_process").spawn;
  * - remote
  * - enable-run
  * - root
+ * - excludes
  * - tls-key
  * - tls-cert
  */
@@ -27,7 +28,8 @@ var spawn = require("child_process").spawn;
 var config = nconf.argv().env().file(process.env.HOME + "/.zeddrc").defaults({
     port: 7337,
     ip: "0.0.0.0",
-    root: process.env.HOME || "/"
+    root: process.env.HOME || "/",
+    excludes: ""
 });
 
 if (!config.get("user") && config.get("ip") === "0.0.0.0") {
@@ -35,6 +37,18 @@ if (!config.get("user") && config.get("ip") === "0.0.0.0") {
 }
 
 var ROOT = pathlib.resolve(config.get("root"));
+
+// matches the default /user.json gotoExcludes list
+var gotoExcludes = "/.git/|.zedstate|.DS_Store";
+var excludes = config.get("excludes");
+if ("" !== excludes){
+    excludes = gotoExcludes + "|" + excludes;
+}
+if ("" === excludes){
+    excludes = gotoExcludes;
+}
+var exclude = new RegExp(excludes);
+
 var enableRun = !config.get("remote") || config.get("enable-run");
 
 switch (process.argv[2]) {
@@ -59,6 +73,7 @@ function help() {
     console.log("               enable-run by default");
     console.log("   port:       port to bind to (default: 7337)");
     console.log("   root:       root directory to expose (default: $HOME)");
+    console.log("   excludes:   exclude exposing these directories using a regex (default: \"/.git/|.zedstate|.DS_Store\")");
     console.log("   enable-run: enable running of external programs in remote mode");
     console.log("   tls-key:    path to TLS key file (enables https)");
     console.log("   tls-cert:   path to TLS certificate file (enables https)");
@@ -284,6 +299,7 @@ function start() {
     console.log(
         "Zedd is now listening on " + (isSecure ? "https" : "http") + "://" + bindIp + ":" + bindPort,
         "\nExposed filesystem :", ROOT,
+        "\nExcluding files    :", excludes,
         "\nMode               :", config.get("remote") ? "remote (externally accessible)" : "local",
         "\nCommand execution  :", enableRun ? "enabled" : "disabled",
         "\nAuthentication     :", config.get("user") ? "enabled" : "disabled");
@@ -341,12 +357,18 @@ function fileList(root, res) {
                     return checkDone();
                 }
                 var file = dir + '/' + name;
+
+                if (exclude.exec(file)) {
+                    return checkDone();
+                }
+
                 fs.stat(root + file, function(err, stat) {
                     if (stat && stat.isDirectory()) {
                         walk(file, function() {
                             checkDone();
                         });
                     } else if (stat && stat.isFile()) {
+                        console.log("Update Filelist", file);
                         res.write(dir + '/' + name + "\n");
                         checkDone();
                     } else {
@@ -367,6 +389,8 @@ function fileList(root, res) {
 
 function runCommand(root, res) {
     var command = res.post.command;
+    console.log("Run command", command);
+
     if (!command) {
         return error(res, 500, "No command specified");
     }
