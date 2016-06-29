@@ -6,7 +6,7 @@ INDEX_COMMAND = find app/config -name '*.*' -not -path '*/.git/*' -not -path '*/
 # http://www.angusj.com/resourcehacker/
 # I run it using wine, adapt as required
 RESOURCEHACKER_CMD = wine 'C:/Program Files (x86)/Resource Hacker/ResHacker.exe'
-NW_VERSION=v0.9.2
+NW_VERSION=v0.11.6
 ZED_VERSION=$(shell cat app/manifest.json | grep '"version"' | cut -f 4 -d '"')
 LBITS := $(shell getconf LONG_BIT)
 PREFIX=/usr/local
@@ -45,9 +45,9 @@ nw/download/node-webkit-$(NW_VERSION)-linux-ia32:
 	mkdir -p nw/download
 	cd nw/download && curl -OL http://dl.node-webkit.org/$(NW_VERSION)/node-webkit-$(NW_VERSION)-linux-ia32.tar.gz && tar xzf node-webkit-$(NW_VERSION)-linux-ia32.tar.gz
 
-nw/download/node-webkit-$(NW_VERSION)-osx-ia32:
+nw/download/node-webkit-$(NW_VERSION)-osx-x64:
 	mkdir -p nw/download
-	cd nw/download && curl -OL http://dl.node-webkit.org/$(NW_VERSION)/node-webkit-$(NW_VERSION)-osx-ia32.zip && unzip -d node-webkit-$(NW_VERSION)-osx-ia32 node-webkit-$(NW_VERSION)-osx-ia32.zip
+	cd nw/download && curl -OL http://dl.node-webkit.org/$(NW_VERSION)/node-webkit-$(NW_VERSION)-osx-x64.zip && unzip -d node-webkit-$(NW_VERSION)-osx-x64 node-webkit-$(NW_VERSION)-osx-x64.zip
 
 nw/download/node-webkit-$(NW_VERSION)-win-ia32:
 	mkdir -p nw/download
@@ -61,13 +61,13 @@ nw/download: nw/download/node-webkit-$(NW_VERSION)-linux-ia32
 endif
 else
 ifeq ($(PLATFORM),mac)
-nw/download: nw/download/node-webkit-$(NW_VERSION)-osx-ia32
+nw/download: nw/download/node-webkit-$(NW_VERSION)-osx-x64
 else
 nw/download: nw/download/node-webkit-$(NW_VERSION)-win-ia32
 endif
 endif
 
-nw/download-all: nw/download/node-webkit-$(NW_VERSION)-linux-x64 nw/download/node-webkit-$(NW_VERSION)-linux-ia32 nw/download/node-webkit-$(NW_VERSION)-osx-ia32 nw/download/node-webkit-$(NW_VERSION)-win-ia32
+nw/download-all: nw/download/node-webkit-$(NW_VERSION)-linux-x64 nw/download/node-webkit-$(NW_VERSION)-linux-ia32 nw/download/node-webkit-$(NW_VERSION)-osx-ia32 nw/download/node-webkit-$(NW_VERSION)-osx-x64 nw/download/node-webkit-$(NW_VERSION)-win-ia32
 
 apps-npm: app/node_modules
 app/node_modules: app/package.json
@@ -77,7 +77,7 @@ apps-mac: release/zed-mac-v$(ZED_VERSION).tar.gz
 release/zed-mac-v$(ZED_VERSION).tar.gz: nw/download apps-npm app/* app/*/* app/*/*/*
 	rm -rf nw/build
 	mkdir -p nw/build
-	cp -r nw/download/node-webkit-$(NW_VERSION)-osx-ia32/node-webkit.app nw/build/Zed.app
+	cp -r nw/download/node-webkit-$(NW_VERSION)-osx-x64/node-webkit.app nw/build/Zed.app
 	cp nw/nw.icns nw/build/Zed.app/Contents/Resources/nw.icns
 	cp nw/Info.plist nw/build/Zed.app/Contents/Info.plist
 	cp -r app nw/build/Zed.app/Contents/Resources/app.nw
