@@ -275,7 +275,7 @@ function requestHandler(req, res) {
 
 function start() {
     var server, isSecure;
-    var bindIp = config.get("remote") ? "0.0.0.0" : "127.0.0.1";
+    var bindIp = config.get("ip")
     var bindPort = config.get("port");
     if (config.get("remote") && !config.get("user")) {
         console.error("In remote mode, --user and --pass need to be specified.");
